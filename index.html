@@ -118,7 +118,7 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;backgrou
     <button class="btn ghost" id="reset" type="button">Revenir aux règles par défaut</button>
   </details>
 
-  <p class="foot">Statistiques : LNH (api.nhle.com), saison régulière. Mise à jour automatique toutes les 30 minutes.</p>
+  <p class="foot">Statistiques : LNH (api.nhle.com), saison régulière. Mise à jour automatique toutes les 10 minutes.</p>
 </div>
 
 <script>
@@ -256,7 +256,7 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
       if (!r.ok) throw new Error('HTTP ' + r.status);
       snap = await r.json();
       render();
-      if (manuel) message('Stats LNH du ' + fmtDate(snap.fetched_at) + '. Mises à jour automatiquement toutes les 30 minutes.', 'ok');
+      if (manuel) message('Stats LNH du ' + fmtDate(snap.fetched_at) + '. Mises à jour automatiquement toutes les 10 minutes.', 'ok');
     } catch (e) {
       message('Impossible de charger les stats (' + e.message + '). Vérifie ta connexion.', 'err');
     } finally { b.disabled = false; b.classList.remove('busy'); }
