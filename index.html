@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pool de hockey 2026-27</title>
+<link rel="icon" href="icone.png">
+<link rel="apple-touch-icon" href="icone.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5fa8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#f6f5f1;--panel:#fff;--fg:#1d1d1b;--muted:#6b6a65;--line:#e3e1da;--ok:#2f7d4f;--bad:#b3412e;--c0:#1f5fa8;--c1:#d07a1f;--c2:#4f9a6a;--c3:#8a5cb8;--accent:#1f5fa8}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--panel:#1f1f1c;--fg:#ecebe6;--muted:#a19f97;--line:#34332f;--ok:#6cc08b;--bad:#e2775f;--c0:#5a9be0;--c1:#e79a45;--c2:#6fc08a;--c3:#b48ae0;--accent:#5a9be0}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:28px}
+h1{font:400 2rem/1.15 Georgia,"Times New Roman",serif;margin:0}
+h2{font-size:1.15rem;margin:0 0 10px}
+.lede{color:var(--muted);margin:6px 0 0}.lede b{color:var(--fg)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+button,select,input{font:inherit;color:inherit}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.spin{width:14px;height:14px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:s 0.8s linear infinite;display:none}
+.busy .spin{display:inline-block}
+@keyframes s{to{transform:rotate(1turn)}}
+.stamp{font-size:.85rem;color:var(--muted)}
+.msg{font-size:.9rem;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel)}
+.msg.err{border-color:var(--bad)}.msg.ok{border-color:var(--ok)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.card.lead{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.rk{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nm{font-weight:600;font-size:1.1rem}
+.pt{font:400 2.6rem/1 Georgia,serif;font-variant-numeric:tabular-nums}
+.sub{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.up{color:var(--ok);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--muted);margin-bottom:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.srow{display:grid;grid-template-columns:70px 1fr 48px;align-items:center;gap:10px}
+.sname{font-weight:600;text-align:right}
+.strack{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--line)}
+.strack span{display:block;height:100%;transition:width .7s ease}
+@media (prefers-reduced-motion:reduce){.strack span{transition:none}}
+.stot{font-weight:700;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{font-size:.78rem;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.n{text-align:right}.b{font-weight:700}
+.cat td{background:var(--bg);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.dlt{color:var(--ok)}
+details{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.rules label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem}
+.rules input{width:64px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);text-align:right}
+select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.foot{font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Pool de hockey 2026-27</h1>
+    <p class="lede" id="lede"></p>
+    <div class="bar">
+      <button class="btn" id="refresh"><span class="spin"></span><span>Actualiser les données</span></button>
+      <span class="stamp" id="stamp"></span>
+    </div>
+    <div class="msg" id="msg" hidden></div>
+  </header>
+
+  <section>
+    <h2>Classement</h2>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section>
+    <h2>D'où viennent les points</h2>
+    <div class="legend"><span><i style="background:var(--c0)"></i>Attaquants</span><span><i style="background:var(--c1)"></i>Défenseurs</span><span><i style="background:var(--c2)"></i>Gardiens</span><span><i style="background:var(--c3)"></i>Équipes</span></div>
+    <div class="stack" id="stack"></div>
+  </section>
+
+  <section>
+    <h2>Tableau des points</h2>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Pooler</th><th class="n">Att.</th><th class="n">Déf.</th><th class="n">Gard.</th><th class="n">Équipes</th><th class="n">Total</th><th class="n">Depuis 1<sup>er</sup> nov.</th></tr></thead>
+      <tbody id="standings"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Les 10 meilleurs du pool</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Joueur</th><th>Pooler</th><th>Pos.</th><th class="n">PJ</th><th class="n">B</th><th class="n">A</th><th class="n">Pts</th></tr></thead>
+      <tbody id="top"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Alignements</h2>
+    <div class="bar" style="margin:0 0 10px"><select id="who" aria-label="Pooler"></select></div>
+    <div class="tw"><table>
+      <thead><tr><th>Joueur</th><th class="n">PJ</th><th class="n">B</th><th class="n">A</th><th class="n">V</th><th class="n">DP</th><th class="n">BL</th><th class="n">Pts</th><th class="n">+ depuis 1<sup>er</sup> nov.</th></tr></thead>
+      <tbody id="roster"></tbody>
+    </table></div>
+  </section>
+
+  <details>
+    <summary>Règles de pointage (modifiables)</summary>
+    <div class="rules" id="rules"></div>
+    <p class="foot">Équipes : leurs points au classement LNH. Les changements sont gardés sur ce téléphone seulement. « + depuis 1<sup>er</sup> nov. » compare aux points de la feuille papier du 1<sup>er</sup> novembre.</p>
+    <button class="btn ghost" id="reset" type="button">Revenir aux règles par défaut</button>
+  </details>
+
+  <p class="foot">Statistiques : LNH (api.nhle.com), saison régulière. Mise à jour automatique toutes les 30 minutes.</p>
+</div>
+
+<script>
+/*DONNEES*/
+window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","feuille":38,"id":8477934},{"pooler":"Karlos","cat":"F","nom":"Kirill Kaprizov","feuille":38,"id":8478864},{"pooler":"Karlos","cat":"F","nom":"Mikko Rantanen","feuille":24,"id":8478420},{"pooler":"Karlos","cat":"F","nom":"William Nylander","feuille":31,"id":8477939},{"pooler":"Karlos","cat":"F","nom":"Matt Boldy","feuille":19,"id":8481557},{"pooler":"Karlos","cat":"F","nom":"Jack Hughes","feuille":22,"id":8481559},{"pooler":"Karlos","cat":"F","nom":"Mitch Marner","feuille":26,"id":8478483},{"pooler":"Karlos","cat":"F","nom":"Mark Scheifele","feuille":14,"id":8476460},{"pooler":"Karlos","cat":"F","nom":"Sam Reinhart","feuille":19,"id":8477933},{"pooler":"Karlos","cat":"D","nom":"Cale Makar","feuille":18,"id":8480069},{"pooler":"Karlos","cat":"D","nom":"Matthew Schaefer","feuille":18,"id":8485366},{"pooler":"Karlos","cat":"D","nom":"Jakob Chychrun","feuille":10,"id":8479345},{"pooler":"Karlos","cat":"D","nom":"Mikhail Sergachev","feuille":20,"id":8479410},{"pooler":"Karlos","cat":"D","nom":"Miro Heiskanen","feuille":14,"id":8480036},{"pooler":"Karlos","cat":"D","nom":"Shayne Gostisbehere","feuille":13,"id":8476906},{"pooler":"Karlos","cat":"G","nom":"Igor Shesterkin","feuille":7,"id":8478048},{"pooler":"Karlos","cat":"G","nom":"Jacob Markström","feuille":8,"id":8474593},{"pooler":"Karlos","cat":"T","nom":"Dallas Stars","feuille":17,"id":25},{"pooler":"Karlos","cat":"T","nom":"Buffalo Sabres","feuille":17,"id":7},{"pooler":"Yo","cat":"F","nom":"Connor McDavid","feuille":45,"id":8478402},{"pooler":"Yo","cat":"F","nom":"David Pastrňák","feuille":27,"id":8477956},{"pooler":"Yo","cat":"F","nom":"Connor Bedard","feuille":13,"id":8484144},{"pooler":"Yo","cat":"F","nom":"Matvei Michkov","feuille":20,"id":8484387},{"pooler":"Yo","cat":"F","nom":"Dylan Guenther","feuille":15,"id":8482699},{"pooler":"Yo","cat":"F","nom":"Cole Caufield","feuille":20,"id":8481540},{"pooler":"Yo","cat":"F","nom":"Ivan Demidov","feuille":3,"id":8484984},{"pooler":"Yo","cat":"F","nom":"Juraj Slafkovský","feuille":11,"id":8483515},{"pooler":"Yo","cat":"F","nom":"Dylan Larkin","feuille":8,"id":8477946},{"pooler":"Yo","cat":"D","nom":"Zach Werenski","feuille":10,"id":8478460},{"pooler":"Yo","cat":"D","nom":"Charlie McAvoy","feuille":9,"id":8479325},{"pooler":"Yo","cat":"D","nom":"Roman Josi","feuille":16,"id":8474600},{"pooler":"Yo","cat":"D","nom":"Mike Matheson","feuille":5,"id":8476875},{"pooler":"Yo","cat":"D","nom":"John Carlson","feuille":13,"id":8474590},{"pooler":"Yo","cat":"D","nom":"Moritz Seider","feuille":8,"id":8481542},{"pooler":"Yo","cat":"G","nom":"Jake Oettinger","feuille":18,"id":8479979},{"pooler":"Yo","cat":"G","nom":"Sergei Bobrovsky","feuille":6,"id":8475683},{"pooler":"Yo","cat":"T","nom":"Canadiens de Montréal","feuille":20,"id":8},{"pooler":"Yo","cat":"T","nom":"Vegas Golden Knights","feuille":19,"id":54},{"pooler":"Dave","cat":"F","nom":"Nathan MacKinnon","feuille":33,"id":8477492},{"pooler":"Dave","cat":"F","nom":"Jason Robertson","feuille":19,"id":8480027},{"pooler":"Dave","cat":"F","nom":"Jack Eichel","feuille":27,"id":8478403},{"pooler":"Dave","cat":"F","nom":"Sebastian Aho","feuille":31,"id":8478427},{"pooler":"Dave","cat":"F","nom":"Alex DeBrincat","feuille":21,"id":8479337},{"pooler":"Dave","cat":"F","nom":"Martin Nečas","feuille":25,"id":8480039},{"pooler":"Dave","cat":"F","nom":"Jake Guentzel","feuille":22,"id":8477404},{"pooler":"Dave","cat":"F","nom":"Tage Thompson","feuille":27,"id":8479420},{"pooler":"Dave","cat":"F","nom":"Mika Zibanejad","feuille":14,"id":8476459},{"pooler":"Dave","cat":"D","nom":"Lane Hutson","feuille":16,"id":8483457},{"pooler":"Dave","cat":"D","nom":"Quinn Hughes","feuille":34,"id":8480800},{"pooler":"Dave","cat":"D","nom":"Josh Morrissey","feuille":3,"id":8477504},{"pooler":"Dave","cat":"D","nom":"Darren Raddysh","feuille":9,"id":8478178},{"pooler":"Dave","cat":"D","nom":"Victor Hedman","feuille":5,"id":8475167},{"pooler":"Dave","cat":"D","nom":"Shea Theodore","feuille":7,"id":8477447},{"pooler":"Dave","cat":"G","nom":"Andrei Vasilevskiy","feuille":11,"id":8476883},{"pooler":"Dave","cat":"G","nom":"Jakub Dobeš","feuille":4,"id":8482487},{"pooler":"Dave","cat":"T","nom":"Carolina Hurricanes","feuille":26,"id":12},{"pooler":"Dave","cat":"T","nom":"Tampa Bay Lightning","feuille":18,"id":14},{"pooler":"Max","cat":"F","nom":"Macklin Celebrini","feuille":21,"id":8484801},{"pooler":"Max","cat":"F","nom":"Nikita Kucherov","feuille":22,"id":8476453},{"pooler":"Max","cat":"F","nom":"Wyatt Johnston","feuille":14,"id":8482740},{"pooler":"Max","cat":"F","nom":"Tim Stützle","feuille":30,"id":8482116},{"pooler":"Max","cat":"F","nom":"Kyle Connor","feuille":26,"id":8478398},{"pooler":"Max","cat":"F","nom":"Auston Matthews","feuille":25,"id":8479318},{"pooler":"Max","cat":"F","nom":"Nick Suzuki","feuille":17,"id":8480018},{"pooler":"Max","cat":"F","nom":"Lucas Raymond","feuille":19,"id":8482078},{"pooler":"Max","cat":"F","nom":"Clayton Keller","feuille":20,"id":8479343},{"pooler":"Max","cat":"D","nom":"Evan Bouchard","feuille":23,"id":8480803},{"pooler":"Max","cat":"D","nom":"Rasmus Dahlin","feuille":11,"id":8480839},{"pooler":"Max","cat":"D","nom":"Adam Fox","feuille":18,"id":8479323},{"pooler":"Max","cat":"D","nom":"Jake Sanderson","feuille":9,"id":8482105},{"pooler":"Max","cat":"D","nom":"Brock Faber","feuille":6,"id":8482122},{"pooler":"Max","cat":"D","nom":"Noah Dobson","feuille":5,"id":8480865},{"pooler":"Max","cat":"G","nom":"Karel Vejmelka","feuille":13,"id":8478872},{"pooler":"Max","cat":"G","nom":"Jeremy Swayman","feuille":14,"id":8480280},{"pooler":"Max","cat":"T","nom":"Colorado Avalanche","feuille":17,"id":21},{"pooler":"Max","cat":"T","nom":"Minnesota Wild","feuille":21,"id":30}],"snap":null};
+/*FIN_DONNEES*/
+</script>
+<script>
+(function(){
+  const POOLERS = ['Karlos','Yo','Dave','Max'];
+  const CATS = [['F','Attaquants'],['D','Défenseurs'],['G','Gardiens'],['T','Équipes']];
+  const DEF = {but:2, passe:1, victoire:2, defProl:1, blanchissage:3};
+  const LABELS = {but:'Point par but',passe:'Point par passe',victoire:'Gardien : victoire',defProl:'Gardien : défaite en prol.',blanchissage:'Gardien : blanchissage'};
+  let rules = Object.assign({}, DEF);
+  try { const s = JSON.parse(localStorage.getItem('pool-regles') || 'null'); if (s) Object.assign(rules, s); } catch (e) {}
+  let snap = window.POOL.snap;
+  const roster = window.POOL.roster;
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+  const fmtDate = (iso) => new Date(iso).toLocaleString('fr-CA', {dateStyle:'long', timeStyle:'short'});
+
+  function score(p) {
+    const s = snap || {skaters:{}, goalies:{}, teams:{}};
+    const id = String(p.id);
+    if (p.cat === 'F' || p.cat === 'D') {
+      const r = s.skaters[id] || [0,0,0];
+      return {gp:r[0], b:r[1], a:r[2], pts: rules.but*r[1] + rules.passe*r[2]};
+    }
+    if (p.cat === 'G') {
+      const r = s.goalies[id] || [0,0,0,0,0,0,0];
+      return {gp:r[0], v:r[1], dp:r[3], bl:r[4], b:r[5], a:r[6], pts: rules.victoire*r[1] + rules.defProl*r[3] + rules.blanchissage*r[4] + rules.but*r[5] + rules.passe*r[6]};
+    }
+    const r = s.teams[id] || [0,0,0,0,0];
+    return {gp:r[0], v:r[1], dp:r[3], pts:r[4]};
+  }
+
+  function render() {
+    const rows = roster.map((p) => Object.assign({}, p, score(p)));
+    const tot = POOLERS.map((name) => {
+      const mine = rows.filter((r) => r.pooler === name);
+      const o = {name, total:0, feuille:0};
+      CATS.forEach(([c]) => { o[c] = mine.filter((r) => r.cat === c).reduce((s, r) => s + r.pts, 0); o.total += o[c]; });
+      o.feuille = mine.reduce((s, r) => s + r.feuille, 0);
+      return o;
+    }).sort((a, b) => b.total - a.total);
+
+    const lede = $('lede'); lede.replaceChildren();
+    if (tot.length > 1) {
+      lede.append(el('b', tot[0].name), ' mène avec ', el('b', String(tot[0].total)), ' points, ', el('b', String(tot[0].total - tot[1].total)), ' devant ', el('b', tot[1].name), '.');
+    }
+    $('stamp').textContent = snap ? 'Données LNH du ' + fmtDate(snap.fetched_at) : 'Aucune donnée';
+
+    const cards = $('cards'); cards.replaceChildren();
+    tot.forEach((t, i) => {
+      const c = el('div', null, 'card' + (i === 0 ? ' lead' : ''));
+      c.append(el('div', ['1er','2e','3e','4e'][i], 'rk'), el('div', t.name, 'nm'), el('div', String(t.total), 'pt'));
+      const sub = el('div', null, 'sub');
+      sub.append(i === 0 ? 'Meneur · ' : '−' + (tot[0].total - t.total) + ' du 1er · ');
+      sub.append(el('span', '+' + (t.total - t.feuille) + ' depuis le 1er nov.', 'up'));
+      c.append(sub); cards.append(c);
+    });
+
+    const max = Math.max(1, ...tot.map((t) => t.total));
+    const st = $('stack'); st.replaceChildren();
+    tot.forEach((t) => {
+      const row = el('div', null, 'srow');
+      const track = el('div', null, 'strack');
+      track.style.width = (t.total / max * 100) + '%';
+      CATS.forEach(([c, lab], i) => {
+        const s = el('span'); s.style.background = 'var(--c' + i + ')'; s.style.width = (t.total ? t[c] / t.total * 100 : 0) + '%';
+        s.title = lab + ' : ' + t[c]; track.append(s);
+      });
+      const holder = el('div'); holder.append(track);
+      row.append(el('div', t.name, 'sname'), holder, el('div', String(t.total), 'stot'));
+      st.append(row);
+    });
+
+    const sb = $('standings'); sb.replaceChildren();
+    tot.forEach((t, i) => {
+      const tr = el('tr');
+      tr.append(el('td', String(i + 1)), el('td', t.name, 'b'));
+      CATS.forEach(([c]) => tr.append(el('td', String(t[c]), 'n')));
+      tr.append(el('td', String(t.total), 'n b'), el('td', '+' + (t.total - t.feuille), 'n dlt'));
+      sb.append(tr);
+    });
+
+    const pos = {F:'Att.', D:'Déf.', G:'Gard.'};
+    const tb = $('top'); tb.replaceChildren();
+    rows.filter((r) => r.cat !== 'T').sort((a, b) => b.pts - a.pts).slice(0, 10).forEach((r) => {
+      const tr = el('tr');
+      tr.append(el('td', r.nom, 'b'), el('td', r.pooler), el('td', pos[r.cat]), el('td', String(r.gp), 'n'), el('td', String(r.b ?? 0), 'n'), el('td', String(r.a ?? 0), 'n'), el('td', String(r.pts), 'n b'));
+      tb.append(tr);
+    });
+
+    const who = $('who').value || tot[0].name;
+    const rb = $('roster'); rb.replaceChildren();
+    CATS.forEach(([c, lab]) => {
+      const list = rows.filter((r) => r.pooler === who && r.cat === c).sort((a, b) => b.pts - a.pts);
+      const h = el('tr', null, 'cat'); const td = el('td', lab); td.colSpan = 9; h.append(td); rb.append(h);
+      list.forEach((r) => {
+        const tr = el('tr');
+        const sk = c === 'F' || c === 'D', tm = c === 'T';
+        const d = r.pts - r.feuille;
+        tr.append(el('td', r.nom), el('td', String(r.gp), 'n'),
+          el('td', tm ? '' : String(r.b ?? 0), 'n'), el('td', tm ? '' : String(r.a ?? 0), 'n'),
+          el('td', sk ? '' : String(r.v), 'n'), el('td', sk ? '' : String(r.dp), 'n'), el('td', c === 'G' ? String(r.bl) : '', 'n'),
+          el('td', String(r.pts), 'n b'), el('td', (d >= 0 ? '+' : '') + d, 'n dlt'));
+        rb.append(tr);
+      });
+    });
+  }
+
+  const who = $('who');
+  POOLERS.forEach((p) => who.append(new Option(p, p)));
+  who.addEventListener('change', render);
+
+  const rd = $('rules');
+  Object.keys(DEF).forEach((k) => {
+    const lab = el('label'); lab.append(el('span', LABELS[k]));
+    const inp = el('input'); inp.type = 'number'; inp.step = '0.5'; inp.value = rules[k];
+    inp.addEventListener('input', () => { const v = parseFloat(inp.value); rules[k] = isNaN(v) ? 0 : v; try { localStorage.setItem('pool-regles', JSON.stringify(rules)); } catch (e) {} render(); });
+    lab.append(inp); rd.append(lab);
+  });
+  $('reset').addEventListener('click', () => {
+    rules = Object.assign({}, DEF); try { localStorage.removeItem('pool-regles'); } catch (e) {}
+    rd.querySelectorAll('input').forEach((inp, i) => { inp.value = DEF[Object.keys(DEF)[i]]; }); render();
+  });
+
+  function message(txt, kind) { const m = $('msg'); m.hidden = !txt; m.textContent = txt || ''; m.className = 'msg ' + (kind || ''); }
+
+  async function charger(manuel) {
+    const b = $('refresh'); b.disabled = true; b.classList.add('busy');
+    try {
+      const r = await fetch('stats.json?t=' + Date.now(), {cache: 'no-store'});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      snap = await r.json();
+      render();
+      if (manuel) message('Stats LNH du ' + fmtDate(snap.fetched_at) + '. Mises à jour automatiquement toutes les 30 minutes.', 'ok');
+    } catch (e) {
+      message('Impossible de charger les stats (' + e.message + '). Vérifie ta connexion.', 'err');
+    } finally { b.disabled = false; b.classList.remove('busy'); }
+  }
+  $('refresh').addEventListener('click', () => charger(true));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(false); });
+  charger(false);
+  render();
+})();
+</script>
+</body>
+</html>
