@@ -26,7 +26,7 @@ button,select,input{font:inherit;color:inherit}
 .spin{width:14px;height:14px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:s 0.8s linear infinite;display:none}
 .busy .spin{display:inline-block}
 @keyframes s{to{transform:rotate(1turn)}}
-.stamp{font-size:.85rem;color:var(--muted)}
+.stamp{font-size:.85rem;color:var(--muted);line-height:1.5}
 .msg{font-size:.9rem;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel)}
 .msg.err{border-color:var(--bad)}.msg.ok{border-color:var(--ok)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
@@ -140,6 +140,8 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
   const $ = (id) => document.getElementById(id);
   const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
   const age = (iso) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000)); return m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : 'il y a ' + Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); };
+  let verif = null;
+  const heure = (iso) => { const d = new Date(iso), auj = new Date(); const h = d.toLocaleTimeString('fr-CA', {hour:'numeric', minute:'2-digit'}); return d.toDateString() === auj.toDateString() ? h : d.toLocaleDateString('fr-CA', {day:'numeric', month:'short'}) + ', ' + h; };
   const fmtDate = (iso) => new Date(iso).toLocaleString('fr-CA', {dateStyle:'long', timeStyle:'short'});
 
   function score(p) {
@@ -189,7 +191,10 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
     if (tot.length > 1) {
       lede.append(el('b', tot[0].name), ' mène avec ', el('b', String(tot[0].total)), ' points, ', el('b', String(tot[0].total - tot[1].total)), ' devant ', el('b', tot[1].name), '.');
     }
-    $('stamp').textContent = snap ? 'Stats LNH du ' + fmtDate(snap.fetched_at) + ' (' + age(snap.fetched_at) + ')' : 'Aucune donnée';
+    const stp = $('stamp'); stp.replaceChildren();
+    stp.append(el('span', 'Dernière mise à jour des stats : ' + (snap ? heure(snap.fetched_at) + ' (' + age(snap.fetched_at) + ')' : '—')));
+    stp.append(el('br'));
+    stp.append(el('span', 'Dernière vérification : ' + (verif ? heure(verif.at) + ' (' + verif.par + ')' : '—')));
 
     const cards = $('cards'); cards.replaceChildren();
     tot.forEach((t, i) => {
@@ -278,8 +283,9 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
       if (!r || !r.ok) r = await fetch('stats.json?t=' + Date.now(), {cache: 'no-store'});
       if (!r.ok) throw new Error('HTTP ' + r.status);
       snap = await r.json();
+      verif = {at: new Date().toISOString(), par: manuel ? 'bouton' : 'automatique'};
       render();
-      if (manuel) message((avant && avant === snap.fetched_at ? 'Déjà à jour. ' : 'Nouvelles stats chargées. ') + 'Stats LNH du ' + fmtDate(snap.fetched_at) + ' (' + age(snap.fetched_at) + '). Elles sont rafraîchies automatiquement toutes les 10 minutes.', 'ok');
+      if (manuel) message(avant && avant === snap.fetched_at ? 'Vérifié : rien de nouveau depuis ' + heure(snap.fetched_at) + '. La LNH est vérifiée toutes les 10 minutes.' : 'Nouvelles stats chargées (' + heure(snap.fetched_at) + ').', 'ok');
     } catch (e) {
       message('Impossible de charger les stats (' + e.message + '). Vérifie ta connexion.', 'err');
     } finally { b.disabled = false; b.classList.remove('busy'); }
@@ -287,6 +293,7 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
   $('refresh').addEventListener('click', () => charger(true));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) charger(false); });
   charger(false);
+  setInterval(() => { if (!document.hidden) charger(false); }, 10 * 60 * 1000);
   render();
 })();
 </script>
