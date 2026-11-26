@@ -49,7 +49,8 @@ button,select,input{font:inherit;color:inherit}
 .tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
-th{font-size:.78rem;color:var(--muted);font-weight:600}
+th{font-size:.74rem;color:var(--muted);font-weight:600;white-space:normal;min-width:4.5em;vertical-align:bottom;line-height:1.2}
+.abs{display:block;font-size:.74rem;color:var(--bad);font-weight:600;white-space:nowrap}
 tr:last-child td{border-bottom:0}
 .n{text-align:right}.b{font-weight:700}
 .cat td{background:var(--bg);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
@@ -89,7 +90,7 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;backgrou
   <section>
     <h2>Tableau des points</h2>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Pooler</th><th class="n">Att.</th><th class="n">Déf.</th><th class="n">Gard.</th><th class="n">Équipes</th><th class="n">Total</th><th class="n">Depuis 1<sup>er</sup> nov.</th></tr></thead>
+      <thead><tr><th>Rang</th><th>Pooler</th><th class="n">Attaquants</th><th class="n">Défenseurs</th><th class="n">Gardiens</th><th class="n">Équipes</th><th class="n">Total</th><th class="n">Gain depuis le 1<sup>er</sup> nov.</th></tr></thead>
       <tbody id="standings"></tbody>
     </table></div>
   </section>
@@ -97,7 +98,7 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;backgrou
   <section>
     <h2>Les 10 meilleurs du pool</h2>
     <div class="tw"><table>
-      <thead><tr><th>Joueur</th><th>Pooler</th><th>Pos.</th><th class="n">PJ</th><th class="n">B</th><th class="n">A</th><th class="n">Pts</th></tr></thead>
+      <thead><tr><th>Joueur</th><th>Pooler</th><th>Position</th><th class="n">Matchs joués</th><th class="n">Buts</th><th class="n">Passes</th><th class="n">Points</th></tr></thead>
       <tbody id="top"></tbody>
     </table></div>
   </section>
@@ -106,7 +107,7 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;backgrou
     <h2>Alignements</h2>
     <div class="bar" style="margin:0 0 10px"><select id="who" aria-label="Pooler"></select></div>
     <div class="tw"><table>
-      <thead><tr><th>Joueur</th><th class="n">PJ</th><th class="n">B</th><th class="n">A</th><th class="n">V</th><th class="n">DP</th><th class="n">BL</th><th class="n">Pts</th><th class="n">+ depuis 1<sup>er</sup> nov.</th></tr></thead>
+      <thead><tr><th>Joueur</th><th class="n">Matchs joués</th><th class="n">Buts</th><th class="n">Passes</th><th class="n">Victoires</th><th class="n">Défaites en prolongation</th><th class="n">Blanchissages</th><th class="n">Points</th><th class="n">Gain depuis le 1<sup>er</sup> nov.</th></tr></thead>
       <tbody id="roster"></tbody>
     </table></div>
   </section>
@@ -138,6 +139,7 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
   const roster = window.POOL.roster;
   const $ = (id) => document.getElementById(id);
   const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+  const age = (iso) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000)); return m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : 'il y a ' + Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); };
   const fmtDate = (iso) => new Date(iso).toLocaleString('fr-CA', {dateStyle:'long', timeStyle:'short'});
 
   function score(p) {
@@ -155,6 +157,24 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
     return {gp:r[0], v:r[1], dp:r[3], pts:r[4]};
   }
 
+  const moisCourt = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  function absence(p) {
+    const a = snap && snap.absences && snap.absences[String(p.id)];
+    if (!a) return null;
+    const seuil = p.cat === 'G' ? 5 : 1;
+    if (a[1] < seuil) return null;
+    if (!a[0]) return 'Pas encore joué · ' + a[1] + ' match' + (a[1] > 1 ? 's' : '') + ' manqué' + (a[1] > 1 ? 's' : '');
+    const [y, m, d] = a[0].split('-').map(Number);
+    return 'Absent depuis le ' + d + (d === 1 ? 'er' : '') + ' ' + moisCourt[m - 1] + ' · ' + a[1] + ' match' + (a[1] > 1 ? 's' : '') + ' manqué' + (a[1] > 1 ? 's' : '');
+  }
+  function nomCell(r, cls) {
+    const td = el('td', null, cls);
+    td.append(el('span', r.nom));
+    const ab = absence(r);
+    if (ab) td.append(el('span', ab, 'abs'));
+    return td;
+  }
+
   function render() {
     const rows = roster.map((p) => Object.assign({}, p, score(p)));
     const tot = POOLERS.map((name) => {
@@ -169,7 +189,7 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
     if (tot.length > 1) {
       lede.append(el('b', tot[0].name), ' mène avec ', el('b', String(tot[0].total)), ' points, ', el('b', String(tot[0].total - tot[1].total)), ' devant ', el('b', tot[1].name), '.');
     }
-    $('stamp').textContent = snap ? 'Données LNH du ' + fmtDate(snap.fetched_at) : 'Aucune donnée';
+    $('stamp').textContent = snap ? 'Stats LNH du ' + fmtDate(snap.fetched_at) + ' (' + age(snap.fetched_at) + ')' : 'Aucune donnée';
 
     const cards = $('cards'); cards.replaceChildren();
     tot.forEach((t, i) => {
@@ -205,11 +225,11 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
       sb.append(tr);
     });
 
-    const pos = {F:'Att.', D:'Déf.', G:'Gard.'};
+    const pos = {F:'Attaquant', D:'Défenseur', G:'Gardien'};
     const tb = $('top'); tb.replaceChildren();
     rows.filter((r) => r.cat !== 'T').sort((a, b) => b.pts - a.pts).slice(0, 10).forEach((r) => {
       const tr = el('tr');
-      tr.append(el('td', r.nom, 'b'), el('td', r.pooler), el('td', pos[r.cat]), el('td', String(r.gp), 'n'), el('td', String(r.b ?? 0), 'n'), el('td', String(r.a ?? 0), 'n'), el('td', String(r.pts), 'n b'));
+      tr.append(nomCell(r, 'b'), el('td', r.pooler), el('td', pos[r.cat]), el('td', String(r.gp), 'n'), el('td', String(r.b ?? 0), 'n'), el('td', String(r.a ?? 0), 'n'), el('td', String(r.pts), 'n b'));
       tb.append(tr);
     });
 
@@ -222,7 +242,7 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
         const tr = el('tr');
         const sk = c === 'F' || c === 'D', tm = c === 'T';
         const d = r.pts - r.feuille;
-        tr.append(el('td', r.nom), el('td', String(r.gp), 'n'),
+        tr.append(nomCell(r), el('td', String(r.gp), 'n'),
           el('td', tm ? '' : String(r.b ?? 0), 'n'), el('td', tm ? '' : String(r.a ?? 0), 'n'),
           el('td', sk ? '' : String(r.v), 'n'), el('td', sk ? '' : String(r.dp), 'n'), el('td', c === 'G' ? String(r.bl) : '', 'n'),
           el('td', String(r.pts), 'n b'), el('td', (d >= 0 ? '+' : '') + d, 'n dlt'));
@@ -251,12 +271,15 @@ window.POOL = {"roster":[{"pooler":"Karlos","cat":"F","nom":"Leon Draisaitl","fe
 
   async function charger(manuel) {
     const b = $('refresh'); b.disabled = true; b.classList.add('busy');
+    const avant = snap && snap.fetched_at;
     try {
-      const r = await fetch('stats.json?t=' + Date.now(), {cache: 'no-store'});
+      let r;
+      try { r = await fetch('https://raw.githubusercontent.com/pool-a-dave/2026-27/main/stats.json?t=' + Date.now(), {cache: 'no-store'}); } catch (e) { r = null; }
+      if (!r || !r.ok) r = await fetch('stats.json?t=' + Date.now(), {cache: 'no-store'});
       if (!r.ok) throw new Error('HTTP ' + r.status);
       snap = await r.json();
       render();
-      if (manuel) message('Stats LNH du ' + fmtDate(snap.fetched_at) + '. Mises à jour automatiquement toutes les 10 minutes.', 'ok');
+      if (manuel) message((avant && avant === snap.fetched_at ? 'Déjà à jour. ' : 'Nouvelles stats chargées. ') + 'Stats LNH du ' + fmtDate(snap.fetched_at) + ' (' + age(snap.fetched_at) + '). Elles sont rafraîchies automatiquement toutes les 10 minutes.', 'ok');
     } catch (e) {
       message('Impossible de charger les stats (' + e.message + '). Vérifie ta connexion.', 'err');
     } finally { b.disabled = false; b.classList.remove('busy'); }
